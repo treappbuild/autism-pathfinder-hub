@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { serviceProviders, familyOrganizations, educationalResources, adultServices } from '@/data/realData';
 import type { ServiceProvider, Organization, EducationalResource } from '@/data/realData';
 
@@ -30,10 +31,11 @@ export interface SearchResult {
 }
 
 export const useSearch = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState<SearchFilters>({
-    category: '',
-    location: '',
+    category: searchParams.get('category') || '',
+    location: searchParams.get('location') || '',
     ageGroup: '',
     insurance: '',
     telehealth: false,
@@ -114,7 +116,14 @@ export const useSearch = () => {
       // Location filter
       if (filters.location) {
         const locationLower = filters.location.toLowerCase();
-        if (!result.location.toLowerCase().includes(locationLower)) {
+        const matchesLocation = 
+          result.location.toLowerCase().includes(locationLower) ||
+          (result.type === 'provider' && 
+           serviceProviders.find(p => p.id === result.id)?.location.state.toLowerCase().includes(locationLower)) ||
+          (result.type === 'provider' && 
+           serviceProviders.find(p => p.id === result.id)?.location.city.toLowerCase().includes(locationLower));
+        
+        if (!matchesLocation) {
           return false;
         }
       }

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -5,6 +7,23 @@ import { Search, MapPin, Users, Brain, Stethoscope, GraduationCap } from "lucide
 import Navigation from "@/components/Navigation";
 
 const Services = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [locationTerm, setLocationTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (locationTerm) params.set('location', locationTerm);
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const handleCategorySearch = (category: string) => {
+    const params = new URLSearchParams();
+    params.set('category', category);
+    if (locationTerm) params.set('location', locationTerm);
+    navigate(`/search?${params.toString()}`);
+  };
   const serviceCategories = [
     {
       icon: Brain,
@@ -62,6 +81,9 @@ const Services = () => {
                 <input
                   type="text"
                   placeholder="Search for services..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
@@ -72,11 +94,14 @@ const Services = () => {
                 <input
                   type="text"
                   placeholder="Enter location..."
+                  value={locationTerm}
+                  onChange={(e) => setLocationTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
-            <Button size="lg">Search</Button>
+            <Button size="lg" onClick={handleSearch}>Search</Button>
           </div>
         </div>
 
@@ -106,7 +131,11 @@ const Services = () => {
                       </Badge>
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handleCategorySearch(category.title)}
+                  >
                     Browse {category.title}
                   </Button>
                 </CardContent>

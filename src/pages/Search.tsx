@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,21 +8,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, MapPin, Filter, Star, Phone, Globe, Clock } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { useSearch } from "@/hooks/useSearch";
 
 const SearchPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { 
+    searchTerm, 
+    setSearchTerm, 
+    filters, 
+    updateFilter, 
+    results, 
+    totalResults, 
+    categories 
+  } = useSearch();
+  
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("relevance");
 
-  const categories = [
-    "Therapists & Specialists",
-    "Diagnostic Centers",
-    "Support Groups",
-    "Educational Services",
-    "Recreational Programs",
-    "Adult Services"
-  ];
+  useEffect(() => {
+    // Initialize search term and location from URL params
+    const urlSearchTerm = searchParams.get('q') || '';
+    const urlLocation = searchParams.get('location') || '';
+    
+    if (urlSearchTerm !== searchTerm) {
+      setSearchTerm(urlSearchTerm);
+    }
+    if (urlLocation !== filters.location) {
+      updateFilter('location', urlLocation);
+    }
+  }, [searchParams]);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (filters.location) params.set('location', filters.location);
+    if (filters.category) params.set('category', filters.category);
+    setSearchParams(params);
+  };
+
 
   const filters = [
     { id: "insurance", label: "Accepts Insurance", checked: false },
@@ -31,50 +55,19 @@ const SearchPage = () => {
     { id: "sliding", label: "Sliding Scale Fees", checked: false }
   ];
 
-  const sampleResults = [
-    {
-      id: 1,
-      name: "Autism Spectrum Therapies",
-      category: "ABA Therapy",
-      rating: 4.8,
-      reviews: 127,
-      address: "123 Main St, Springfield, IL",
-      phone: "(555) 123-4567",
-      website: "www.autismtherapies.com",
-      distance: "2.3 miles",
-      hours: "Mon-Fri 8am-6pm",
-      accepts: ["Insurance", "Medicaid", "Private Pay"],
-      specialties: ["Early Intervention", "School-Age", "Social Skills"]
-    },
-    {
-      id: 2,
-      name: "Children's Developmental Center",
-      category: "Diagnostic Services",
-      rating: 4.6,
-      reviews: 89,
-      address: "456 Oak Ave, Springfield, IL",
-      phone: "(555) 987-6543",
-      website: "www.childrensdevelopment.org",
-      distance: "3.7 miles",
-      hours: "Mon-Thu 9am-5pm",
-      accepts: ["Insurance", "Private Pay"],
-      specialties: ["ADOS Assessment", "Psychological Testing", "Early Diagnosis"]
-    },
-    {
-      id: 3,
-      name: "Midwest Autism Support Group",
-      category: "Support Groups",
-      rating: 4.9,
-      reviews: 45,
-      address: "789 Community Center Dr, Springfield, IL",
-      phone: "(555) 456-7890",
-      website: "www.midwestautism.org",
-      distance: "1.8 miles",
-      hours: "2nd Saturdays 10am-12pm",
-      accepts: ["Free"],
-      specialties: ["Parent Support", "Newly Diagnosed", "Spanish-Speaking"]
+  // Sort results based on selected criteria
+  const sortedResults = [...results].sort((a, b) => {
+    switch (sortBy) {
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'reviews':
+        return (b.reviewCount || 0) - (a.reviewCount || 0);
+      case 'name':
+        return a.name.localeCompare(b.name);
+      default:
+        return 0; // relevance - keep original order
     }
-  ];
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,6 +91,7 @@ const SearchPage = () => {
                     placeholder="Search for services, providers, or keywords..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     className="pl-10"
                   />
                 </div>
@@ -107,18 +101,20 @@ const SearchPage = () => {
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Enter location..."
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    value={filters.location}
+                    onChange={(e) => updateFilter('location', e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     className="pl-10"
                   />
                 </div>
               </div>
               <div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">All Categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -138,7 +134,7 @@ const SearchPage = () => {
                 <Filter className="h-4 w-4" />
                 <span>More Filters</span>
               </Button>
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto" onClick={handleSearch}>
                 Search
               </Button>
             </div>
@@ -168,24 +164,41 @@ const SearchPage = () => {
             <h2 className="text-xl font-semibold">Search Results</h2>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                Showing {sampleResults.length} of 156 results
+                Showing {sortedResults.length} of {totalResults} results
               </span>
-              <Select defaultValue="relevance">
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="relevance">Most Relevant</SelectItem>
-                  <SelectItem value="distance">Nearest First</SelectItem>
                   <SelectItem value="rating">Highest Rated</SelectItem>
                   <SelectItem value="reviews">Most Reviewed</SelectItem>
+                  <SelectItem value="name">Alphabetical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Results List */}
-          {sampleResults.map((result) => (
+          {sortedResults.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <h3 className="text-lg font-semibold mb-2">No results found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search terms or filters to find what you're looking for.
+                </p>
+                <Button onClick={() => {
+                  setSearchTerm('');
+                  updateFilter('location', '');
+                  updateFilter('category', '');
+                }}>
+                  Clear Search
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            sortedResults.map((result) => (
             <Card key={result.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -193,58 +206,83 @@ const SearchPage = () => {
                     <div className="flex items-center space-x-3 mb-2">
                       <CardTitle className="text-xl">{result.name}</CardTitle>
                       <Badge variant="secondary">{result.category}</Badge>
+                      {result.featured && <Badge className="bg-primary">Featured</Badge>}
+                      {result.verified && <Badge variant="outline">Verified</Badge>}
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                    {result.rating && (
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
                       <div className="flex items-center space-x-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="font-medium">{result.rating}</span>
-                        <span>({result.reviews} reviews)</span>
+                        <span>({result.reviewCount} reviews)</span>
                       </div>
-                      <span>•</span>
-                      <span>{result.distance}</span>
-                    </div>
+                      </div>
+                    )}
                     <CardDescription className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4" />
-                      <span>{result.address}</span>
+                      <span>{result.location}</span>
                     </CardDescription>
                   </div>
                   <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                    <Button>Contact</Button>
-                    <Button variant="outline">View Details</Button>
+                    <Button onClick={() => window.open(result.website, '_blank')}>
+                      Visit Website
+                    </Button>
+                    {result.phone && (
+                      <Button variant="outline" onClick={() => window.open(`tel:${result.phone}`)}>
+                        Call Now
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className="flex items-center space-x-2">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                  {result.phone && (
+                    <div className="flex items-center space-x-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{result.phone}</span>
-                  </div>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.website}</span>
+                    <span className="text-sm truncate">{result.website}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.hours}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {result.accepts.map((payment, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {payment}
-                      </Badge>
-                    ))}
-                  </div>
+                  {result.telehealth && (
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Telehealth Available</span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="text-sm font-medium">Specialties: </span>
-                  <span className="text-sm text-muted-foreground">
-                    {result.specialties.join(", ")}
-                  </span>
-                </div>
+                {result.services && result.services.length > 0 && (
+                  <div className="mb-4">
+                    <span className="text-sm font-medium">Services: </span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {result.services.slice(0, 3).map((service, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {service}
+                        </Badge>
+                      ))}
+                      {result.services.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{result.services.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {result.specialties && result.specialties.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium">Specialties: </span>
+                    <span className="text-sm text-muted-foreground">
+                      {result.specialties.join(", ")}
+                    </span>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Pagination */}
