@@ -1,11 +1,27 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Users, GraduationCap, Briefcase, Search, MapPin, Star, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useSearch } from "@/hooks/useSearch";
+import { Heart, Users, GraduationCap, Briefcase, Search, MapPin, Star, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 
 const Index = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [locationTerm, setLocationTerm] = useState("");
+  const navigate = useNavigate();
+  const { featuredResults } = useSearch();
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (locationTerm) params.set('location', locationTerm);
+    navigate(`/search?${params.toString()}`);
+  };
   const quickStats = [
     { number: "3,500+", label: "Service Providers", icon: Heart },
     { number: "1,200+", label: "Support Groups", icon: Users },
@@ -36,6 +52,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Autism Directory - Find Services, Support & Resources"
+        description="Comprehensive autism resource directory. Find therapists, support groups, educational services, and family resources."
+        keywords={['autism directory', 'autism services', 'autism therapy', 'autism support']}
+      />
       <Navigation />
       
       {/* Hero Section */}
