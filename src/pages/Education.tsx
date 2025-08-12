@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +5,6 @@ import { GraduationCap, FileText, Home, Users, ArrowRight, BookOpen } from "luci
 import Navigation from "@/components/Navigation";
 
 const Education = () => {
-  const navigate = useNavigate();
-
-  const handleCategoryClick = (category: string) => {
-    const params = new URLSearchParams();
-    params.set('category', 'Educational Resources');
-    navigate(`/search?${params.toString()}`);
-  };
   const educationCategories = [
     {
       icon: GraduationCap,
@@ -144,12 +136,7 @@ const Education = () => {
                   <CardDescription className="text-sm">{tool.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => handleCategoryClick(category.title)}
-                  >
+                  <Button variant="outline" size="sm" className="w-full">
                     Download
                   </Button>
                 </CardContent>
@@ -167,12 +154,8 @@ const Education = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => handleCategoryClick('Educational Services')}>
-              Schedule Consultation
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => handleCategoryClick('Educational Resources')}>
-              Browse Success Stories
-            </Button>
+            <Button size="lg">Schedule Consultation</Button>
+            <Button variant="outline" size="lg">Browse Success Stories</Button>
           </div>
         </div>
       </div>

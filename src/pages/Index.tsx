@@ -17,10 +17,6 @@ const Index = () => {
   const { featuredResults } = useSearch();
 
   const handleSearch = () => {
-    if (!searchTerm && !locationTerm) {
-      navigate('/search');
-      return;
-    }
     const params = new URLSearchParams();
     if (searchTerm) params.set('q', searchTerm);
     if (locationTerm) params.set('location', locationTerm);
@@ -81,9 +77,6 @@ const Index = () => {
                 <input
                   type="text"
                   placeholder="Search for services, providers, or resources..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-10 pr-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-lg"
                 />
               </div>
@@ -92,13 +85,10 @@ const Index = () => {
                 <input
                   type="text"
                   placeholder="Location..."
-                  value={locationTerm}
-                  onChange={(e) => setLocationTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-10 pr-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-lg sm:w-48"
                 />
               </div>
-              <Button size="lg" className="px-8" onClick={handleSearch}>
+              <Button size="lg" className="px-8">
                 Search
               </Button>
             </div>

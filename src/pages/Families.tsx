@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +5,6 @@ import { Heart, Shield, DollarSign, Scale, Users, BookOpen } from "lucide-react"
 import Navigation from "@/components/Navigation";
 
 const Families = () => {
-  const navigate = useNavigate();
-
-  const handleResourceClick = (category: string) => {
-    const params = new URLSearchParams();
-    params.set('category', 'Family Support');
-    navigate(`/search?${params.toString()}`);
-  };
   const familyResources = [
     {
       icon: Heart,
@@ -128,7 +120,6 @@ const Families = () => {
                     ))}
                   </div>
                   <Button variant="outline" className="w-full">
-                    onClick={() => handleResourceClick(category.title)}
                     Explore All Resources
                   </Button>
                 </CardContent>
@@ -164,12 +155,8 @@ const Families = () => {
             Join our community of families for support, advice, and shared experiences.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => handleResourceClick('Support Groups')}>
-              Join Family Forum
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => handleResourceClick('Support Groups')}>
-              Find Local Support Groups
-            </Button>
+            <Button size="lg">Join Family Forum</Button>
+            <Button variant="outline" size="lg">Find Local Support Groups</Button>
           </div>
         </div>
       </div>

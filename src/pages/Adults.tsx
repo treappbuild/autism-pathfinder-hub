@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +5,6 @@ import { Briefcase, Home, Users, Brain, Heart, ArrowRight } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
 const Adults = () => {
-  const navigate = useNavigate();
-
-  const handleServiceClick = (serviceTitle: string) => {
-    const params = new URLSearchParams();
-    params.set('category', 'Adult Support');
-    navigate(`/search?${params.toString()}`);
-  };
   const adultServices = [
     {
       icon: Briefcase,
@@ -174,12 +166,8 @@ const Adults = () => {
                     ))}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button className="flex-1" onClick={() => handleServiceClick(service.title)}>
-                      Browse {service.title}
-                    </Button>
-                    <Button variant="outline" className="flex-1" onClick={() => handleServiceClick(service.title)}>
-                      Find Near Me
-                    </Button>
+                    <Button className="flex-1">Browse {service.title}</Button>
+                    <Button variant="outline" className="flex-1">Find Near Me</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -223,12 +211,8 @@ const Adults = () => {
             Connect with our adult support specialists for personalized guidance and resources.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => handleServiceClick('Adult Support')}>
-              Schedule Consultation
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => handleServiceClick('Adult Support')}>
-              Join Adult Community
-            </Button>
+            <Button size="lg">Schedule Consultation</Button>
+            <Button variant="outline" size="lg">Join Adult Community</Button>
           </div>
         </div>
       </div>
