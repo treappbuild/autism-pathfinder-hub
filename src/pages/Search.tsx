@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, MapPin, Filter, Star, Phone, Globe, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, MapPin, Filter, Phone, Globe, LocateFixed } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { useSearchParams } from "react-router-dom";
+import { useLocationProviders } from "@/hooks/useLocationProviders";
 
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<"Therapists & Specialists" | "Diagnostic Centers" | "">("");
   const [showFilters, setShowFilters] = useState(false);
+  const [params] = useSearchParams();
+  const { results: remoteResults, loading, error, fetchByLocation, useMyLocation, sourceAttribution } = useLocationProviders();
 
   const categories = [
     "Therapists & Specialists",
@@ -31,50 +36,34 @@ const SearchPage = () => {
     { id: "sliding", label: "Sliding Scale Fees", checked: false }
   ];
 
-  const sampleResults = [
-    {
-      id: 1,
-      name: "Autism Spectrum Therapies",
-      category: "ABA Therapy",
-      rating: 4.8,
-      reviews: 127,
-      address: "123 Main St, Springfield, IL",
-      phone: "(555) 123-4567",
-      website: "www.autismtherapies.com",
-      distance: "2.3 miles",
-      hours: "Mon-Fri 8am-6pm",
-      accepts: ["Insurance", "Medicaid", "Private Pay"],
-      specialties: ["Early Intervention", "School-Age", "Social Skills"]
-    },
-    {
-      id: 2,
-      name: "Children's Developmental Center",
-      category: "Diagnostic Services",
-      rating: 4.6,
-      reviews: 89,
-      address: "456 Oak Ave, Springfield, IL",
-      phone: "(555) 987-6543",
-      website: "www.childrensdevelopment.org",
-      distance: "3.7 miles",
-      hours: "Mon-Thu 9am-5pm",
-      accepts: ["Insurance", "Private Pay"],
-      specialties: ["ADOS Assessment", "Psychological Testing", "Early Diagnosis"]
-    },
-    {
-      id: 3,
-      name: "Midwest Autism Support Group",
-      category: "Support Groups",
-      rating: 4.9,
-      reviews: 45,
-      address: "789 Community Center Dr, Springfield, IL",
-      phone: "(555) 456-7890",
-      website: "www.midwestautism.org",
-      distance: "1.8 miles",
-      hours: "2nd Saturdays 10am-12pm",
-      accepts: ["Free"],
-      specialties: ["Parent Support", "Newly Diagnosed", "Spanish-Speaking"]
+  // Initialize from URL params and optionally auto-search
+  useEffect(() => {
+    const q = params.get('q') || '';
+    const loc = params.get('location') || '';
+    const cat = (params.get('category') as any) || '';
+    const geo = params.get('geo');
+    if (q) setSearchTerm(q);
+    if (loc) setLocation(loc);
+    if (cat) setSelectedCategory(cat);
+    const effectiveCategory = (cat || selectedCategory || 'Therapists & Specialists') as any;
+    if (geo === '1') {
+      useMyLocation(effectiveCategory);
+    } else if (loc && (effectiveCategory === 'Therapists & Specialists' || effectiveCategory === 'Diagnostic Centers')) {
+      fetchByLocation(loc, effectiveCategory);
     }
-  ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSearch = () => {
+    const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
+    if (location && (effectiveCategory === 'Therapists & Specialists' || effectiveCategory === 'Diagnostic Centers')) {
+      fetchByLocation(location, effectiveCategory);
+    }
+  };
+
+  const resultsToShow = remoteResults;
+  const totalCount = resultsToShow.length;
+  const formatMiles = (km?: number) => (km ? `${(km * 0.621371).toFixed(1)} miles` : undefined);
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,9 +101,14 @@ const SearchPage = () => {
                     className="pl-10"
                   />
                 </div>
+                <div className="mt-2">
+                  <Button variant="ghost" size="sm" onClick={() => useMyLocation((selectedCategory || 'Therapists & Specialists') as any)} className="inline-flex items-center gap-2">
+                    <LocateFixed className="h-4 w-4" /> Use my location
+                  </Button>
+                </div>
               </div>
               <div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as any)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
@@ -138,7 +132,7 @@ const SearchPage = () => {
                 <Filter className="h-4 w-4" />
                 <span>More Filters</span>
               </Button>
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto" onClick={handleSearch}>
                 Search
               </Button>
             </div>
@@ -164,87 +158,97 @@ const SearchPage = () => {
 
         {/* Search Results */}
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Search Results</h2>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                Showing {sampleResults.length} of 156 results
-              </span>
-              <Select defaultValue="relevance">
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relevance">Most Relevant</SelectItem>
-                  <SelectItem value="distance">Nearest First</SelectItem>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="reviews">Most Reviewed</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Search Results</h2>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-muted-foreground">
+                  Showing {totalCount} result{totalCount === 1 ? '' : 's'}
+                </span>
+                <Select defaultValue="relevance">
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="relevance">Most Relevant</SelectItem>
+                    <SelectItem value="distance">Nearest First</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="reviews">Most Reviewed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
           {/* Results List */}
-          {sampleResults.map((result) => (
-            <Card key={result.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <CardTitle className="text-xl">{result.name}</CardTitle>
-                      <Badge variant="secondary">{result.category}</Badge>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{result.rating}</span>
-                        <span>({result.reviews} reviews)</span>
+          {loading ? (
+            <div className="grid gap-4">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-4">
+                  <Skeleton className="h-6 w-1/3 mb-3" />
+                  <Skeleton className="h-4 w-1/2 mb-2" />
+                  <Skeleton className="h-4 w-1/4" />
+                </Card>
+              ))}
+            </div>
+          ) : resultsToShow.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              No results yet. Enter a location and press Search, or use "Use my location".
+            </div>
+          ) : (
+            resultsToShow.map((result) => (
+              <Card key={result.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <CardTitle className="text-xl">{result.name}</CardTitle>
+                        <Badge variant="secondary">{result.category}</Badge>
                       </div>
-                      <span>•</span>
-                      <span>{result.distance}</span>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                        {result.distanceKm ? (
+                          <span>{formatMiles(result.distanceKm)} away</span>
+                        ) : null}
+                      </div>
+                      {result.address && (
+                        <CardDescription className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{result.address}</span>
+                        </CardDescription>
+                      )}
                     </div>
-                    <CardDescription className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{result.address}</span>
-                    </CardDescription>
+                    <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                      {result.phone ? (
+                        <Button asChild>
+                          <a href={`tel:${result.phone}`}>Contact</a>
+                        </Button>
+                      ) : (
+                        <Button disabled>Contact</Button>
+                      )}
+                      <Button variant="outline" asChild>
+                        <a href={result.website || result.osmUrl} target="_blank" rel="noreferrer">View Details</a>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                    <Button>Contact</Button>
-                    <Button variant="outline">View Details</Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {result.phone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{result.phone}</span>
+                      </div>
+                    )}
+                    {result.website && (
+                      <div className="flex items-center space-x-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm truncate max-w-[280px]">{result.website}</span>
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground self-center">{sourceAttribution}</div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.phone}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.website}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.hours}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {result.accepts.map((payment, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {payment}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-sm font-medium">Specialties: </span>
-                  <span className="text-sm text-muted-foreground">
-                    {result.specialties.join(", ")}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
         {/* Pagination */}

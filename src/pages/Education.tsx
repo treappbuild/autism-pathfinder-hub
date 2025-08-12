@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, FileText, Home, Users, ArrowRight, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { Link } from "react-router-dom";
 
 const Education = () => {
   const educationCategories = [
@@ -113,8 +114,8 @@ const Education = () => {
                       </div>
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full">
-                    Explore {category.title}
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to={`/search?q=${encodeURIComponent(category.title)}`}>Explore {category.title}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -136,8 +137,8 @@ const Education = () => {
                   <CardDescription className="text-sm">{tool.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <Button variant="outline" size="sm" className="w-full">
-                    Download
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link to={`/search?q=${encodeURIComponent(tool.title)}`}>Download</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -154,8 +155,8 @@ const Education = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Schedule Consultation</Button>
-            <Button variant="outline" size="lg">Browse Success Stories</Button>
+            <Button size="lg" asChild><Link to="/search?q=Education%20Consultation">Schedule Consultation</Link></Button>
+            <Button variant="outline" size="lg" asChild><Link to="/search?q=Success%20Stories">Browse Success Stories</Link></Button>
           </div>
         </div>
       </div>

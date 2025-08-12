@@ -78,6 +78,8 @@ const Index = () => {
                   type="text"
                   placeholder="Search for services, providers, or resources..."
                   className="w-full pl-10 pr-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-lg"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="relative">
@@ -86,9 +88,11 @@ const Index = () => {
                   type="text"
                   placeholder="Location..."
                   className="w-full pl-10 pr-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-lg sm:w-48"
+                  value={locationTerm}
+                  onChange={(e) => setLocationTerm(e.target.value)}
                 />
               </div>
-              <Button size="lg" className="px-8">
+              <Button size="lg" className="px-8" onClick={handleSearch}>
                 Search
               </Button>
             </div>
@@ -240,7 +244,9 @@ const Index = () => {
             <Link to="/search">
               <Button size="lg">Start Searching</Button>
             </Link>
-            <Button size="lg" variant="outline">Browse by Location</Button>
+            <Link to="/search">
+              <Button size="lg" variant="outline">Browse by Location</Button>
+            </Link>
           </div>
         </div>
       </section>

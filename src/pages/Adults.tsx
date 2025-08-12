@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, Home, Users, Brain, Heart, ArrowRight } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { Link } from "react-router-dom";
 
 const Adults = () => {
   const adultServices = [
@@ -166,8 +167,12 @@ const Adults = () => {
                     ))}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button className="flex-1">Browse {service.title}</Button>
-                    <Button variant="outline" className="flex-1">Find Near Me</Button>
+                    <Button className="flex-1" asChild>
+                      <Link to={`/search?category=${encodeURIComponent(service.title)}`}>Browse {service.title}</Link>
+                    </Button>
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link to={`/search?category=${encodeURIComponent(service.title)}&geo=1`}>Find Near Me</Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -199,7 +204,7 @@ const Adults = () => {
                   <p className="text-sm text-muted-foreground">Building meaningful connections</p>
                 </div>
               </div>
-              <Button size="lg">Read Success Stories</Button>
+              <Button size="lg" asChild><Link to="/search?q=Success%20Stories">Read Success Stories</Link></Button>
             </CardContent>
           </Card>
         </div>
@@ -211,8 +216,8 @@ const Adults = () => {
             Connect with our adult support specialists for personalized guidance and resources.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Schedule Consultation</Button>
-            <Button variant="outline" size="lg">Join Adult Community</Button>
+            <Button size="lg" asChild><Link to="/search?q=Adult%20Support">Schedule Consultation</Link></Button>
+            <Button variant="outline" size="lg" asChild><Link to="/search?q=Adult%20Community">Join Adult Community</Link></Button>
           </div>
         </div>
       </div>

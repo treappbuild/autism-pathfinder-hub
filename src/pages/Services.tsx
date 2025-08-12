@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Users, Brain, Stethoscope, GraduationCap } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { Link } from "react-router-dom";
 
 const Services = () => {
   const serviceCategories = [
@@ -106,8 +107,8 @@ const Services = () => {
                       </Badge>
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full">
-                    Browse {category.title}
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to={`/search?category=${encodeURIComponent(category.title)}`}>Browse {category.title}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -122,8 +123,8 @@ const Services = () => {
             Our team can help match you with the right providers based on your specific needs and location.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Get Personalized Recommendations</Button>
-            <Button variant="outline" size="lg">Browse by Location</Button>
+            <Button size="lg" asChild><Link to="/search">Get Personalized Recommendations</Link></Button>
+            <Button variant="outline" size="lg" asChild><Link to="/search">Browse by Location</Link></Button>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Shield, DollarSign, Scale, Users, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { Link } from "react-router-dom";
 
 const Families = () => {
   const familyResources = [
@@ -88,8 +89,8 @@ const Families = () => {
                   </div>
                 ))}
               </div>
-              <Button size="lg" className="w-full sm:w-auto">
-                Access Complete Guide
+              <Button size="lg" className="w-full sm:w-auto" asChild>
+                <Link to="/search?q=Newly%20Diagnosed%20Families%20Guide">Access Complete Guide</Link>
               </Button>
             </CardContent>
           </Card>
@@ -115,12 +116,14 @@ const Families = () => {
                     {category.resources.map((resource, resourceIndex) => (
                       <div key={resourceIndex} className="flex items-center justify-between py-2 border-b border-border/50 last:border-b-0">
                         <span className="text-sm">{resource}</span>
-                        <Button variant="ghost" size="sm">View</Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/search?q=${encodeURIComponent(resource)}`}>View</Link>
+                        </Button>
                       </div>
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full">
-                    Explore All Resources
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/search?q=Family%20Resources">Explore All Resources</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -155,8 +158,8 @@ const Families = () => {
             Join our community of families for support, advice, and shared experiences.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg">Join Family Forum</Button>
-            <Button variant="outline" size="lg">Find Local Support Groups</Button>
+            <Button size="lg" asChild><Link to="/search?q=Family%20Forum">Join Family Forum</Link></Button>
+            <Button variant="outline" size="lg" asChild><Link to="/search?q=Support%20Groups">Find Local Support Groups</Link></Button>
           </div>
         </div>
       </div>
