@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type RemoteCategory =
   | 'Therapists & Specialists'
-  | 'Diagnostic Centers';
+  | 'Diagnostic Centers'
+  | 'Support Groups'
+  | 'Educational Services'
+  | 'Recreational Programs'
+  | 'Adult Services';
 
 export interface RemotePlace {
   id: string;
@@ -28,18 +32,55 @@ const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
 const NOMINATIM_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
 
 function buildOverpassQuery(lat: number, lon: number, radiusMeters: number, category: RemoteCategory) {
-  // Build an Overpass QL query targeting relevant healthcare tags
-  // Reference: https://wiki.openstreetmap.org/wiki/Key:healthcare
-  const filters =
-    category === 'Therapists & Specialists'
-      ? [
-          'nwr["healthcare"~"psychologist|therapy|speech_therapist|occupational_therapist"]',
-          'nwr["amenity"="clinic"]["healthcare"~"*" ]',
-        ]
-      : [
-          'nwr["healthcare"~"clinic|diagnostic_centre|hospital"]',
-          'nwr["amenity"="clinic"]',
-        ];
+  // Build an Overpass QL query targeting relevant tags per category
+  // References: https://wiki.openstreetmap.org/wiki/Key:healthcare, https://wiki.openstreetmap.org/wiki/Key:social_facility
+  let filters: string[] = [];
+  switch (category) {
+    case 'Therapists & Specialists':
+      filters = [
+        'nwr["healthcare"~"psychologist|therapy|counselling|speech_therapist|occupational_therapist"]',
+        'nwr["amenity"="clinic"]["healthcare"~".*"]',
+      ];
+      break;
+    case 'Diagnostic Centers':
+      filters = [
+        'nwr["healthcare"~"clinic|diagnostic_centre|hospital"]',
+        'nwr["amenity"="clinic"]',
+      ];
+      break;
+    case 'Support Groups':
+      filters = [
+        'nwr["social_facility"]["social_facility:for"~"autism|disability|special_needs", i]',
+        'nwr["amenity"="community_centre"]',
+      ];
+      break;
+    case 'Educational Services':
+      filters = [
+        'nwr["amenity"="school"]["special_school"="yes"]',
+        'nwr["amenity"="school"]["school:for"~"special_needs|autism", i]',
+        'nwr["amenity"="college"]["special_needs"="yes"]',
+      ];
+      break;
+    case 'Recreational Programs':
+      filters = [
+        'nwr["leisure"="sports_centre"]',
+        'nwr["leisure"="playground"]["inclusive_playground"="yes"]',
+        'nwr["leisure"="playground"]["access:disabled"="yes"]',
+        'nwr["amenity"="community_centre"]',
+      ];
+      break;
+    case 'Adult Services':
+      filters = [
+        'nwr["social_facility"]["social_facility:for"~"adult|disability", i]',
+        'nwr["healthcare"~"clinic|therapy"]',
+      ];
+      break;
+    default:
+      filters = [
+        'nwr["healthcare"~"psychologist|therapy|counselling|speech_therapist|occupational_therapist"]',
+        'nwr["amenity"="clinic"]["healthcare"~".*"]',
+      ];
+  }
 
   const around = `around:${radiusMeters},${lat},${lon}`;
   const body = `[

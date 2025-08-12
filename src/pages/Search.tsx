@@ -9,12 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, MapPin, Filter, Phone, Globe, LocateFixed } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { useSearchParams } from "react-router-dom";
-import { useLocationProviders } from "@/hooks/useLocationProviders";
+import { SEO } from "@/components/SEO";
+import { useLocationProviders, type RemoteCategory } from "@/hooks/useLocationProviders";
 
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<"Therapists & Specialists" | "Diagnostic Centers" | "">("");
+  const [selectedCategory, setSelectedCategory] = useState<RemoteCategory | "">("");
   const [showFilters, setShowFilters] = useState(false);
   const [params] = useSearchParams();
   const { results: remoteResults, loading, error, fetchByLocation, useMyLocation, sourceAttribution } = useLocationProviders();
@@ -48,7 +49,7 @@ const SearchPage = () => {
     const effectiveCategory = (cat || selectedCategory || 'Therapists & Specialists') as any;
     if (geo === '1') {
       useMyLocation(effectiveCategory);
-    } else if (loc && (effectiveCategory === 'Therapists & Specialists' || effectiveCategory === 'Diagnostic Centers')) {
+    } else if (loc) {
       fetchByLocation(loc, effectiveCategory);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,7 +57,7 @@ const SearchPage = () => {
 
   const handleSearch = () => {
     const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
-    if (location && (effectiveCategory === 'Therapists & Specialists' || effectiveCategory === 'Diagnostic Centers')) {
+    if (location) {
       fetchByLocation(location, effectiveCategory);
     }
   };
@@ -68,6 +69,11 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <SEO
+        title="Search Autism Resources Near You"
+        description="Find autism therapists, diagnostic centers, support groups, and services near your location."
+        keywords={["autism resources","therapists","diagnostic centers","support groups","special needs services","near me"]}
+      />
       
       <div className="container py-8">
         {/* Search Header */}
