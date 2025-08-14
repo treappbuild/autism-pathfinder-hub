@@ -14,13 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_usage_tracking: {
+        Row: {
+          api_provider: string
+          created_at: string
+          date: string
+          endpoint: string
+          estimated_cost: number | null
+          id: string
+          request_count: number
+        }
+        Insert: {
+          api_provider: string
+          created_at?: string
+          date?: string
+          endpoint: string
+          estimated_cost?: number | null
+          id?: string
+          request_count?: number
+        }
+        Update: {
+          api_provider?: string
+          created_at?: string
+          date?: string
+          endpoint?: string
+          estimated_cost?: number | null
+          id?: string
+          request_count?: number
+        }
+        Relationships: []
+      }
+      places_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          query_params: Json
+          radius_meters: number | null
+          results: Json
+          search_type: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          query_params: Json
+          radius_meters?: number | null
+          results: Json
+          search_type: string
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          query_params?: Json
+          radius_meters?: number | null
+          results?: Json
+          search_type?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      search_analytics: {
+        Row: {
+          api_cost_estimate: number | null
+          cache_hit: boolean
+          category: string | null
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          response_time_ms: number | null
+          result_count: number | null
+          search_query: string
+          search_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          api_cost_estimate?: number | null
+          cache_hit?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          response_time_ms?: number | null
+          result_count?: number | null
+          search_query: string
+          search_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          api_cost_estimate?: number | null
+          cache_hit?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          response_time_ms?: number | null
+          result_count?: number | null
+          search_query?: string
+          search_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clean_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      generate_cache_key: {
+        Args: { params: Json; search_type: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
