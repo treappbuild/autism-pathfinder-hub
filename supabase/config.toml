@@ -1,1 +1,7 @@
 project_id = "kssitjzomloujsgtplqn"
+
+[functions.google-places-search]
+verify_jwt = false
+
+[functions.hybrid-search]
+verify_jwt = false

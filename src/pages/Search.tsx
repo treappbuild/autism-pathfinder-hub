@@ -6,19 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MapPin, Filter, Phone, Globe, LocateFixed } from "lucide-react";
+import { Search, MapPin, Filter, Phone, Globe, LocateFixed, Star, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { useSearchParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { useLocationProviders, type RemoteCategory } from "@/hooks/useLocationProviders";
+import { useHybridSearch } from "@/hooks/useHybridSearch";
+import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<RemoteCategory | "">("");
   const [showFilters, setShowFilters] = useState(false);
+  const [searchMode, setSearchMode] = useState<'hybrid' | 'osm' | 'google'>('hybrid');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [params] = useSearchParams();
-  const { results: remoteResults, loading, error, fetchByLocation, useMyLocation, sourceAttribution } = useLocationProviders();
+  
+  const { results: osmResults, loading: osmLoading, fetchByLocation, useMyLocation, sourceAttribution } = useLocationProviders();
+  const { results: hybridResults, loading: hybridLoading, hybridSearch } = useHybridSearch();
+  const { results: googleResults, loading: googleLoading, searchText, searchNearby } = useGooglePlaces();
 
   const categories = [
     "Therapists & Specialists",
@@ -46,23 +53,98 @@ const SearchPage = () => {
     if (q) setSearchTerm(q);
     if (loc) setLocation(loc);
     if (cat) setSelectedCategory(cat);
-    const effectiveCategory = (cat || selectedCategory || 'Therapists & Specialists') as any;
+    
     if (geo === '1') {
-      useMyLocation(effectiveCategory);
-    } else if (loc) {
-      fetchByLocation(loc, effectiveCategory);
+      handleUseMyLocation();
+    } else if (loc && q) {
+      handleSearch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSearch = () => {
-    const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
-    if (location) {
-      fetchByLocation(location, effectiveCategory);
+  const handleUseMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(coords);
+          performHybridSearch(coords);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Fallback to OSM search
+          const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
+          useMyLocation(effectiveCategory);
+        }
+      );
     }
   };
 
-  const resultsToShow = remoteResults;
+  const performHybridSearch = async (coords?: { lat: number; lng: number }) => {
+    if (searchMode === 'hybrid') {
+      await hybridSearch({
+        query: searchTerm || 'autism therapy services',
+        location: coords || userLocation || undefined,
+        category: selectedCategory || undefined,
+        includeOSM: true,
+        includeGoogle: true,
+        maxResults: 25
+      });
+    } else if (searchMode === 'google' && coords) {
+      if (searchTerm) {
+        await searchNearby(coords, searchTerm);
+      } else {
+        await searchText('autism therapy services', coords);
+      }
+    } else {
+      // Fallback to OSM
+      const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
+      if (location) {
+        fetchByLocation(location, effectiveCategory);
+      }
+    }
+  };
+
+  const handleSearch = async () => {
+    if (userLocation) {
+      await performHybridSearch(userLocation);
+    } else if (location) {
+      // Geocode location first, then search
+      try {
+        const geocodeResponse = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
+        );
+        const geocodeData = await geocodeResponse.json();
+        
+        if (geocodeData.length > 0) {
+          const coords = {
+            lat: parseFloat(geocodeData[0].lat),
+            lng: parseFloat(geocodeData[0].lon)
+          };
+          setUserLocation(coords);
+          await performHybridSearch(coords);
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        // Fallback to OSM search
+        const effectiveCategory = (selectedCategory || 'Therapists & Specialists') as any;
+        fetchByLocation(location, effectiveCategory);
+      }
+    }
+  };
+
+  // Determine which results to show and loading state
+  const resultsToShow = searchMode === 'hybrid' ? hybridResults : 
+                      searchMode === 'google' ? googleResults : 
+                      osmResults;
+  
+  const loading = searchMode === 'hybrid' ? hybridLoading : 
+                 searchMode === 'google' ? googleLoading : 
+                 osmLoading;
+
   const totalCount = resultsToShow.length;
   const formatMiles = (km?: number) => (km ? `${(km * 0.621371).toFixed(1)} miles` : undefined);
 
@@ -108,7 +190,7 @@ const SearchPage = () => {
                   />
                 </div>
                 <div className="mt-2">
-                  <Button variant="ghost" size="sm" onClick={() => useMyLocation((selectedCategory || 'Therapists & Specialists') as any)} className="inline-flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleUseMyLocation} className="inline-flex items-center gap-2">
                     <LocateFixed className="h-4 w-4" /> Use my location
                   </Button>
                 </div>
